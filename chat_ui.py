@@ -18,6 +18,9 @@ st.title("🤖 SalesBot: Ask About Product Docs")
 # Initialize chat history
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+    # Add greeting message from assistant
+    greeting = "Hello! 👋 I'm SalesBot. Ask me anything about your product documents."
+    st.session_state.chat_history.append({"role": "assistant", "content": greeting})
 
 # Display existing chat messages
 for i, chat in enumerate(st.session_state.chat_history):
@@ -114,18 +117,23 @@ with st.sidebar:
 
 # Add a button to download chat as PDF
 if st.session_state.chat_history:
+    import re
+    def remove_non_latin1(text):
+        # Remove characters not supported by latin1 (e.g., emojis)
+        return re.sub(r'[^\x00-\xff]', '', text)
+
     def generate_pdf(chat_history):
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=12)
-        pdf.cell(0, 10, "SalesBot Conversation Report", ln=True, align="C")
+        pdf.cell(0, 10, remove_non_latin1("SalesBot Conversation Report"), ln=True, align="C")
         pdf.ln(10)
         for chat in chat_history:
             role = "User" if chat["role"] == "user" else "SalesBot"
             pdf.set_font("Arial", style="B", size=12)
-            pdf.cell(0, 10, f"{role}:", ln=True)
+            pdf.cell(0, 10, remove_non_latin1(f"{role}:"), ln=True)
             pdf.set_font("Arial", size=12)
-            pdf.multi_cell(0, 10, chat["content"])
+            pdf.multi_cell(0, 10, remove_non_latin1(chat["content"]))
             pdf.ln(2)
         pdf_bytes = pdf.output(dest='S').encode('latin1')
         return io.BytesIO(pdf_bytes)
